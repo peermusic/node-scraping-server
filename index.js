@@ -18,6 +18,8 @@ storage.init({
 var server = restify.createServer()
 server.use(restify.queryParser())
 server.use(restify.bodyParser())
+server.use(restify.CORS())
+server.use(restify.fullResponse())
 
 // Setup the routes
 server.post('/similarTrack', getSimilarTrack)
@@ -36,16 +38,21 @@ server.listen(8080, '127.0.0.1', function () {
 // Get the cover for an album
 function getCover (request, response, next) {
   // Get the request from the payload
-  var payload = JSON.parse(request.body).payload
+  var payload = request.body.payload
   var artist = payload.artist
   var album = payload.album
-  var filename = './store/COVER_' + artist + '_' + album
+  var filename = './store/COVER_' + (artist + ' ' + album).replace(/[^0-9a-zA-Z_]/g, '_')
+  var response_wrapper = {
+    request: {artist: artist, album: album},
+    response: null
+  }
 
   // Check if we already have that in cache
   fs.readFile(filename, function (err, data) {
     // We already have the file in cache, send it back to the user
     if (data !== undefined) {
-      response.send(200, data.toString('utf8'))
+      response_wrapper.response = data.toString('utf8')
+      response.send(200, response_wrapper)
       return next()
     }
 
@@ -64,7 +71,8 @@ function getCover (request, response, next) {
           return errorLogger(err, response, next)
         }
         console.log('The file "' + filename + '" got saved!')
-        response.send(200, file)
+        response_wrapper.response = file
+        response.send(200, response_wrapper)
         return next()
       })
     })
@@ -74,7 +82,7 @@ function getCover (request, response, next) {
 // Get similar tracks
 function getSimilarTrack (request, response, next) {
   // Get the request from the payload
-  var payload = JSON.parse(request.body).payload
+  var payload = request.body.payload
   var title = payload.title
 
   if (!title) {
@@ -111,7 +119,7 @@ function getSimilarTrack (request, response, next) {
 // Get similar artists
 function getSimilarArtist (request, response, next) {
   // Get the request from the payload
-  var payload = JSON.parse(request.body).payload
+  var payload = request.body.payload
   var artist = payload.artist
 
   if (!artist) {
