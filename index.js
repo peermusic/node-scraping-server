@@ -39,13 +39,13 @@ function getCover (request, response, next) {
   var payload = JSON.parse(request.body).payload
   var artist = payload.artist
   var album = payload.album
-  var filename = './' + artist + '_' + album
+  var filename = './store/COVER_' + artist + '_' + album
 
   // Check if we already have that in cache
   fs.readFile(filename, function (err, data) {
     // We already have the file in cache, send it back to the user
     if (data !== undefined) {
-      response.send(200, data)
+      response.send(200, data.toString('utf8'))
       return next()
     }
 
@@ -55,8 +55,11 @@ function getCover (request, response, next) {
         return errorLogger(err, response, next)
       }
 
+      // Attach the base64 marker
+      file = 'data:image/jpeg;base64,' + file
+
       // We got the cover from our engine, let's save it and return
-      fs.writeFile(filename, file, 'binary', function (err) {
+      fs.writeFile(filename, file, function (err) {
         if (err) {
           return errorLogger(err, response, next)
         }
