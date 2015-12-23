@@ -92,13 +92,13 @@ function getSimilarTrack (request, response, next) {
   // Check if we already have that in cache
   storage.getItem(title, function (err, cache) {
     // We already have the file in cache, send it back to the user
-    if (cache !== undefined && title === cache.titel) {
+    if (cache !== undefined && title === cache.title) {
       response.send(200, cache)
       return next()
     }
 
     // We need to get the data from our engine
-    engine.getSimilarTitel(title, function (err, result) {
+    engine.getSimilarTitle(title, function (err, result) {
       if (err) {
         return errorLogger(err, response, next)
       }
