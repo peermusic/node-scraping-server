@@ -3,16 +3,14 @@ var restify = require('restify')
 var storage = require('node-persist')
 var engine = require('scrape-engine')()
 var fs = require('fs')
+var rusha = new (require('rusha'))()
 
 /*******************************************************************
  * Initialization
  *******************************************************************/
 
 // Initialize node persist storage
-storage.init({
-  logging: true,
-  dir: __dirname + '/store'
-})
+storage.init({dir: __dirname + '/store'})
 
 // Initialize restify
 var server = restify.createServer()
@@ -83,29 +81,25 @@ function getCover (request, response, next) {
 function getSimilarTrack (request, response, next) {
   // Get the request from the payload
   var payload = request.body.payload
-  var title = payload.title
-
-  if (!title) {
-    return errorLogger('Title is not defined', response, next)
-  }
+  var hash = rusha.digestFromString(JSON.stringify(payload))
 
   // Check if we already have that in cache
-  storage.getItem(title, function (err, cache) {
+  storage.getItem(hash, function (err, cache) {
     // We already have the file in cache, send it back to the user
-    if (cache !== undefined && title === cache.title) {
+    if (cache !== undefined) {
       response.send(200, cache)
       return next()
     }
 
     // We need to get the data from our engine
-    engine.getSimilarTitle(title, function (err, result) {
+    engine.getSimilarTitle(payload.title, payload.album, payload.artist, payload.genre, function (err, result) {
       if (err) {
         return errorLogger(err, response, next)
       }
 
       // We got the data from our engine, let's save it and return
-      var entry = {title: title, result: result}
-      storage.setItem(entry.title, entry, function (err) {
+      var entry = {payload: payload, result: result}
+      storage.setItem(hash, entry, function (err) {
         if (err) {
           return errorLogger(err, response, next)
         }
@@ -159,7 +153,7 @@ function errorLogger (err, response, next) {
   console.error('Error: ' + err)
   response.status(500)
   response.json({
-    type: false,
+    type: 'ERROR',
     data: 'Error occurred: ' + err
   })
   return next()

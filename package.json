@@ -26,6 +26,7 @@
     "fs": "0.0.2",
     "node-persist": "0.0.8",
     "restify": "^4.0.3",
+    "rusha": "^0.8.3",
     "scrape-engine": "git+https://github.com/peermusic/scrape-engine.git"
   }
 }
