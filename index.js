@@ -148,7 +148,7 @@ function getSimilarArtist (request, response, next) {
   })
 }
 
-// Log an error out to the user
+// Send the error as a special response to the user
 function errorLogger (err, response, next) {
   console.error('Error: ' + err)
   response.status(500)
