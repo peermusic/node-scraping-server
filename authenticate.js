@@ -44,27 +44,24 @@ function addUser (description) {
   // Generate the id and the keypair
   var id = uid(20)
   var keyPair = nacl.sign.keyPair()
-  keyPair.publicKey = nacl.util.encodeBase64(keyPair.publicKey)
-  keyPair.secretKey = nacl.util.encodeBase64(keyPair.secretKey)
+  const key = nacl.util.encodeBase64(keyPair.publicKey)
 
   // Save it in the storage
   authenticatedUsers[id] = {
     description: description,
-    publicKey: keyPair.publicKey,
-    secretKey: keyPair.secretKey
+    key: key
   }
   storage.setItem('authenticatedUsers', authenticatedUsers)
 
   // Print some information about the usage
   console.log('> Unique ID: ' + id)
-  console.log('> Public Key: ' + keyPair.publicKey)
-  console.log('> Secret Key: ' + keyPair.secretKey)
+  console.log('> Key: ' + key)
 
   console.log('\nPlease share the following link over a secure channel with')
   console.log('the user you wish to authenticate. It can get added in the')
   console.log('Manage -> Servers section of the client application.\n')
 
-  console.log(url(id, keyPair.secretKey))
+  console.log(url(id, key))
   console.log('')
 }
 
@@ -79,9 +76,8 @@ function listUsers () {
     var user = authenticatedUsers[id]
     console.log('> Description: ' + user.description)
     console.log('> Unique ID: ' + id)
-    console.log('> Public Key: ' + user.publicKey)
-    console.log('> Secret Key: ' + user.secretKey)
-    console.log('> Authentication URL: ' + url(id, user.secretKey))
+    console.log('> Key: ' + user.key)
+    console.log('> Authentication URL: ' + url(id, user.key))
     console.log('')
   }
 }

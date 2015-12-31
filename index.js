@@ -131,7 +131,7 @@ function getAuthenticatedPayload (requestBody) {
   }
 
   // Give to messaging function who handles all the cryptography logic
-  return messaging.decrypt(requestBody, user)
+  return messaging.decrypt(requestBody, user.key)
 }
 
 function generateResponder (response, requestBody) {
@@ -140,7 +140,7 @@ function generateResponder (response, requestBody) {
 
   // Return a function that will return an encrypted response
   return function (payload) {
-    var encryptedPayload = messaging.encrypt(payload, user)
+    var encryptedPayload = messaging.encrypt(payload, user.key)
     response.send(200, encryptedPayload)
   }
 }
