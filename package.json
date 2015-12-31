@@ -28,6 +28,7 @@
     "restify": "^4.0.3",
     "rusha": "^0.8.3",
     "scrape-engine": "git+https://github.com/peermusic/scrape-engine.git",
+    "secure-client-server-messaging": "git+https://github.com/peermusic/secure-client-server-messaging.git",
     "tweetnacl": "^0.13.2",
     "uid": "0.0.2"
   }

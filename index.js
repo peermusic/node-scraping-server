@@ -4,6 +4,7 @@ var storage = require('node-persist')
 var engine = require('scrape-engine')()
 var fs = require('fs')
 var rusha = new (require('rusha'))()
+var messaging = require('secure-client-server-messaging')
 
 /*******************************************************************
  * Initialization
@@ -31,25 +32,25 @@ server.listen(8080, '127.0.0.1', function () {
 
 // Get the cover for an album
 function getCover (request, response, next) {
-  // Make sure our storage is synchronized with what we have on disk
-  storage.initSync({dir: __dirname + '/store'})
+  // Get the payload while making sure it is authenticated
+  var payload = getAuthenticatedPayload(request.body)
+  if (!payload) {
+    return errorLogger('Authentication failed', response, next)
+  }
+
+  // Generate a function that will return an encrypted response
+  var responder = generateResponder(response, request.body)
 
   // Get the request from the payload
-  var payload = request.body.payload
   var artist = payload.artist
   var album = payload.album
   var filename = './store/COVER_' + (artist + ' ' + album).replace(/[^0-9a-zA-Z_]/g, '_')
-  var response_wrapper = {
-    request: {artist: artist, album: album},
-    response: null
-  }
 
   // Check if we already have that in cache
   fs.readFile(filename, function (err, data) {
     // We already have the file in cache, send it back to the user
     if (data !== undefined) {
-      response_wrapper.response = data.toString('utf8')
-      response.send(200, response_wrapper)
+      responder(data.toString('utf8'))
       return next()
     }
 
@@ -68,8 +69,7 @@ function getCover (request, response, next) {
           return errorLogger(err, response, next)
         }
         console.log('The file "' + filename + '" got saved!')
-        response_wrapper.response = file
-        response.send(200, response_wrapper)
+        responder(file)
         return next()
       })
     })
@@ -78,18 +78,23 @@ function getCover (request, response, next) {
 
 // Get similar tracks
 function getSimilarTrack (request, response, next) {
-  // Make sure our storage is synchronized with what we have on disk
-  storage.initSync({dir: __dirname + '/store'})
+  // Get the payload while making sure it is authenticated
+  var payload = getAuthenticatedPayload(request.body)
+  if (!payload) {
+    return errorLogger('Authentication failed', response, next)
+  }
+
+  // Generate a function that will return an encrypted response
+  var responder = generateResponder(response, request.body)
 
   // Get the request from the payload
-  var payload = request.body.payload
   var hash = 'similar-track' + rusha.digestFromString(JSON.stringify(payload))
 
   // Check if we already have that in cache
   storage.getItem(hash, function (err, cache) {
     // We already have the file in cache, send it back to the user
     if (cache !== undefined) {
-      response.send(200, cache)
+      responder(cache)
       return next()
     }
 
@@ -105,11 +110,39 @@ function getSimilarTrack (request, response, next) {
         if (err) {
           return errorLogger(err, response, next)
         }
-        response.send(200, entry)
+        responder(entry)
         return next()
       })
     })
   })
+}
+
+// Get the payload of a encrypted request
+function getAuthenticatedPayload (requestBody) {
+  // Make sure our storage is synchronized with what we have on disk so changes
+  // on the user get reflected here even if the server doesn't get restarted
+  storage.initSync({dir: __dirname + '/store'})
+  var id = requestBody.id
+
+  // Grab the user by id
+  var user = storage.getItem('authenticatedUsers')[id]
+  if (!id || !user) {
+    return false
+  }
+
+  // Give to messaging function who handles all the cryptography logic
+  return messaging.decrypt(requestBody, user)
+}
+
+function generateResponder (response, requestBody) {
+  // Grab the user by id
+  var user = storage.getItem('authenticatedUsers')[requestBody.id]
+
+  // Return a function that will return an encrypted response
+  return function (payload) {
+    var encryptedPayload = messaging.encrypt(payload, user)
+    response.send(200, encryptedPayload)
+  }
 }
 
 // Send the error as a special response to the user
