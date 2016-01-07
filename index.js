@@ -49,7 +49,7 @@ function getCover (request, response, next) {
   // Check if we already have that in cache
   fs.readFile(filename, function (err, data) {
     // We already have the file in cache, send it back to the user
-    if (data !== undefined) {
+    if (err === null && data !== undefined) {
       responder(data.toString('utf8'))
       return next()
     }
@@ -93,7 +93,7 @@ function getSimilarTrack (request, response, next) {
   // Check if we already have that in cache
   storage.getItem(hash, function (err, cache) {
     // We already have the file in cache, send it back to the user
-    if (cache !== undefined) {
+    if (err === null && cache !== undefined) {
       responder(cache)
       return next()
     }
