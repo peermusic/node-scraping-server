@@ -67,7 +67,7 @@ function addUser (description) {
 
 // Generate a url out of a ID and a secret key
 function url (id, secret) {
-  return 'peermusic://localhost:8080/#' + id + ':' + secret
+  return 'web+peermusic://SCRAPING#localhost:8080#' + id + '#' + secret
 }
 
 // List all currently authenticated users
