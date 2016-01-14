@@ -14,7 +14,7 @@ node index.js
 
 ## Authenticate users
 
-To access the scraping server, users have to authenticate themselves against the server with a URL that looks like this: `peermusic://host:port/#user-id:secret-key`
+To access the scraping server, users have to authenticate themselves against the server with a URL that looks like this: `web+peermusic://host:port#user-id#secret-key`
 
 - **Add a new user:** `node authenticate.js add <Description of the user>`
 - **List all currently authenticated users:** `node authenticate.js list`
